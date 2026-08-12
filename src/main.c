@@ -1,38 +1,79 @@
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <readline/history.h>
-#include <readline/readline.h>
-int main(void)
+#include "../include/lexer.h"
+#include "../include/history.h"
+
+void print_tokens(Token *tokens, int count)
 {
- // Display a welcome banner when the shell starts
- printf("=====================================\n");
- printf("Shellforge \n");
- printf(" A Unix Style Shell written in C\n");
- printf("=====================================\n");
- char *line;
- while (1)
- {
- line = readline("shellforge$ ");
- if (line == NULL)
+    printf("\n----------- TOKENS ------------\n");
+
+    for (int i = 0; i < count; i++)
+    {
+        if (tokens[i].type == TOKEN_WORD)
+        {
+            printf("%d : WORD        %s\n", i, tokens[i].value);
+        }
+        else if (tokens[i].type == TOKEN_END)
+        {
+            printf("%d : END         %s\n", i, tokens[i].value);
+        }
+    }
+
+    printf("-------------------------------\n");
+}
+
+int main()
 {
- printf("\nGoodbye!\n");
- break;
- }
- if (strlen(line) == 0)
- {
- free(line);
- continue;
- }
- add_history(line);
- if (strcmp(line, "exit") == 0)
- {
- free(line);
-printf("Exiting...\n");
- break;
- }
- printf(" YOU ENTERED : %s\n", line);
- free(line);
- }
- return 0;
+    char input[1024];
+    Token *tokens;
+    int count;
+
+    printf("================================\n");
+
+    while (1)
+    {
+        printf("shellforge$ ");
+
+        if (fgets(input, sizeof(input), stdin) == NULL)
+        {
+            break;
+        }
+
+        input[strcspn(input, "\n")] = '\0';
+
+        if (strcmp(input, "exit") == 0)
+        {
+            break;
+        }
+
+        if (input[0] == '\0')
+        {
+            continue;
+        }
+
+        add_history(input);
+
+        if (strcmp(input, "history") == 0)
+        {
+            print_history();
+            continue;
+        }
+
+        tokens = tokenize(input, &count);
+
+        print_tokens(tokens, count);
+
+        for (int i = 0; i < count; i++)
+        {
+            free(tokens[i].value);
+        }
+
+        free(tokens);
+    }
+
+    clear_history();
+
+    return 0;
 }
