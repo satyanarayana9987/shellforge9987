@@ -1,0 +1,160 @@
+========================================
+    Shellforge
+ A Unix Style Shell written in C
+========================================
+shellforge$ pwd
+
+------------- TOKENS -------------
+ 0 : WORD         pwd
+ 1 : END          END
+----------------------------------
+
+========== PIPELINE ==========
+
+Command 1
+----------------------------
+Arguments
+argv[0] = pwd
+Input      : None
+Output     : None
+Append     : No
+Background : No
+==============================
+/home/satya9987/shellforge
+shellforge$ cd
+
+------------- TOKENS -------------
+ 0 : WORD         cd
+ 1 : END          END
+----------------------------------
+
+========== PIPELINE ==========
+
+Command 1
+----------------------------
+Arguments
+argv[0] = cd
+Input      : None
+Output     : None
+Append     : No
+Background : No
+==============================
+shellforge$ pwd
+
+------------- TOKENS -------------
+ 0 : WORD         pwd
+ 1 : END          END
+----------------------------------
+
+========== PIPELINE ==========
+
+Command 1
+----------------------------
+Arguments
+argv[0] = pwd
+Input      : None
+Output     : None
+Append     : No
+Background : No
+==============================
+/home/satya9987
+shellforge$ cd /tmp
+
+------------- TOKENS -------------
+ 0 : WORD         cd
+ 1 : WORD         /tmp
+ 2 : END          END
+----------------------------------
+
+========== PIPELINE ==========
+
+Command 1
+----------------------------
+Arguments
+argv[0] = cd
+argv[1] = /tmp
+Input      : None
+Output     : None
+Append     : No
+Background : No
+==============================
+shellforge$ pwd
+
+------------- TOKENS -------------
+ 0 : WORD         pwd
+ 1 : END          END
+----------------------------------
+
+========== PIPELINE ==========
+
+Command 1
+----------------------------
+Arguments
+argv[0] = pwd
+Input      : None
+Output     : None
+Append     : No
+Background : No
+==============================
+/tmp
+shellforge$ echo Hello World
+
+------------- TOKENS -------------
+ 0 : WORD         echo
+ 1 : WORD         Hello
+ 2 : WORD         World
+ 3 : END          END
+----------------------------------
+
+========== PIPELINE ==========
+
+Command 1
+----------------------------
+Arguments
+argv[0] = echo
+argv[1] = Hello
+argv[2] = World
+Input      : None
+Output     : None
+Append     : No
+Background : No
+==============================
+Hello World
+shellforge$ cd /nonexistent
+
+------------- TOKENS -------------
+ 0 : WORD         cd
+ 1 : WORD         /nonexistent
+ 2 : END          END
+----------------------------------
+
+========== PIPELINE ==========
+
+Command 1
+----------------------------
+Arguments
+argv[0] = cd
+argv[1] = /nonexistent
+Input      : None
+Output     : None
+Append     : No
+Background : No
+==============================
+shellforge$ exit
+
+------------- TOKENS -------------
+ 0 : WORD         exit
+ 1 : END          END
+----------------------------------
+
+========== PIPELINE ==========
+
+Command 1
+----------------------------
+Arguments
+argv[0] = exit
+Input      : None
+Output     : None
+Append     : No
+Background : No
+==============================

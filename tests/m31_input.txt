@@ -1,0 +1,8 @@
+pwd
+cd
+pwd
+cd /tmp
+pwd
+echo Hello World
+cd /nonexistent
+exit

@@ -1,0 +1,17 @@
+pwd
+mkdir demo
+ls
+cd demo
+pwd
+echo first line > new.txt
+cat new.txt
+echo second line >> new.txt
+cat new.txt
+cd ..
+rm -r demo
+mkdir empty1
+rmdir empty1
+echo hello
+date
+nosuchcmd
+exit

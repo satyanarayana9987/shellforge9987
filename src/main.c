@@ -1,79 +1,68 @@
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../include/lexer.h"
-#include "../include/history.h"
+#include <readline/readline.h>
+#include <readline/history.h>
+#include "token.h"
+#include "lexer.h"
+#include "parser.h"
+#include "expand.h"
+#include "builtin.h"
+#include "executor.h"
 
-void print_tokens(Token *tokens, int count)
-{
-    printf("\n----------- TOKENS ------------\n");
+int main(void) {
+    token_list_t tokens;
+    pipeline_t pipeline;
+    char *line;
+    int should_exit = 0;
 
-    for (int i = 0; i < count; i++)
-    {
-        if (tokens[i].type == TOKEN_WORD)
-        {
-            printf("%d : WORD        %s\n", i, tokens[i].value);
-        }
-        else if (tokens[i].type == TOKEN_END)
-        {
-            printf("%d : END         %s\n", i, tokens[i].value);
-        }
-    }
+    /* set SHELLFORGE_QUIET=1 to hide the TOKENS / PIPELINE debug output */
+    int quiet = (getenv("SHELLFORGE_QUIET") != NULL);
 
-    printf("-------------------------------\n");
-}
+    printf("========================================\n");
+    printf("    Shellforge\n");
+    printf(" A Unix Style Shell written in C\n");
+    printf("========================================\n");
 
-int main()
-{
-    char input[1024];
-    Token *tokens;
-    int count;
+    while (1) {
+        line = readline("shellforge$ ");
 
-    printf("================================\n");
-
-    while (1)
-    {
-        printf("shellforge$ ");
-
-        if (fgets(input, sizeof(input), stdin) == NULL)
-        {
+        if (line == NULL) {
+            printf("\nGoodbye!\n");
             break;
         }
 
-        input[strcspn(input, "\n")] = '\0';
+        if (strlen(line) == 0) {
+            free(line);
+            continue;
+        }
 
-        if (strcmp(input, "exit") == 0)
-        {
+        add_history(line);
+
+        if (lexer(line, &tokens)) {
+            if (!quiet) {
+                token_print(&tokens);
+            }
+
+            if (parse(&tokens, &pipeline)) {
+                expand_variables(&pipeline);
+
+                if (!quiet) {
+                    pipeline_print(&pipeline);
+                }
+
+                if (execute_pipeline(&pipeline) == 1) {
+                    should_exit = 1;
+                }
+            }
+        }
+
+        free(line);
+
+        if (should_exit) {
             break;
         }
-
-        if (input[0] == '\0')
-        {
-            continue;
-        }
-
-        add_history(input);
-
-        if (strcmp(input, "history") == 0)
-        {
-            print_history();
-            continue;
-        }
-
-        tokens = tokenize(input, &count);
-
-        print_tokens(tokens, count);
-
-        for (int i = 0; i < count; i++)
-        {
-            free(tokens[i].value);
-        }
-
-        free(tokens);
     }
-
-    clear_history();
 
     return 0;
 }

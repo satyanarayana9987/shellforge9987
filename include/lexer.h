@@ -3,6 +3,11 @@
 
 #include "token.h"
 
-Token *tokenize(const char *input, int *count);
+/*
+ * Splits `input` into tokens (WORD, PIPE, INPUT, OUTPUT, APPEND,
+ * BACKGROUND) and always finishes the list with an END token.
+ * Returns 1 on success, 0 on error (message already printed).
+ */
+int lexer(const char *input, token_list_t *list);
 
 #endif

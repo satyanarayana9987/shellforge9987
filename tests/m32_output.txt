@@ -1,0 +1,38 @@
+========================================
+    Shellforge
+ A Unix Style Shell written in C
+========================================
+shellforge$ pwd
+/home/satya9987/shellforge
+shellforge$ mkdir demo
+shellforge$ ls
+Makefile
+backup_before_m3
+build
+demo
+docs
+include
+makefile.old
+shellforge
+src
+tests
+shellforge$ cd demo
+shellforge$ pwd
+/home/satya9987/shellforge/demo
+shellforge$ echo first line > new.txt
+shellforge$ cat new.txt
+first line
+shellforge$ echo second line >> new.txt
+shellforge$ cat new.txt
+first line
+second line
+shellforge$ cd ..
+shellforge$ rm -r demo
+shellforge$ mkdir empty1
+shellforge$ rmdir empty1
+shellforge$ echo hello
+hello
+shellforge$ date
+Sat Sep 19 04:58:04 UTC 2026
+shellforge$ nosuchcmd
+shellforge$ exit
