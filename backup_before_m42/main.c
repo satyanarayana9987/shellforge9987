@@ -15,8 +15,6 @@ int main(void) {
     pipeline_t pipeline;
     char *line;
     int should_exit = 0;
-    setup_background_handler();
-    rl_variable_bind("enable-bracketed-paste", "off");
 
     /* set SHELLFORGE_QUIET=1 to hide the TOKENS / PIPELINE debug output */
     int quiet = (getenv("SHELLFORGE_QUIET") != NULL);

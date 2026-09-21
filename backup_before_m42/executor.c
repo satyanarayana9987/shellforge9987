@@ -5,39 +5,11 @@
 #include <string.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <signal.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include "executor.h"
 #include "builtin.h"
-
-/* ---------- SIGCHLD handler: zombie prevention for background jobs ---------- */
-
-static void sigchld_handler(int sig)
-{
-    int saved_errno = errno;
-    (void)sig;
-
-    while (waitpid(-1, NULL, WNOHANG) > 0) {
-        /* reaped one finished child */
-    }
-
-    errno = saved_errno;
-}
-
-void setup_background_handler(void)
-{
-    struct sigaction sa;
-
-    memset(&sa, 0, sizeof(sa));
-    sa.sa_handler = sigchld_handler;
-    sigemptyset(&sa.sa_mask);
-    sa.sa_flags = SA_RESTART | SA_NOCLDSTOP;
-    sigaction(SIGCHLD, &sa, NULL);
-}
-
-/* ---------- redirection helpers ---------- */
 
 /* Apply  < file  and  > file / >> file  to this process.
    Returns 0 on success, -1 on error (message already printed). */
@@ -75,20 +47,8 @@ static int apply_redirections(const command_t *cmd)
     return 0;
 }
 
-/* A background job must not read from the terminal: give it /dev/null. */
-static void redirect_stdin_from_null(void)
-{
-    int fd = open("/dev/null", O_RDONLY);
-    if (fd >= 0) {
-        dup2(fd, STDIN_FILENO);
-        close(fd);
-    }
-}
-
-/* ---------- built-in in the shell process ---------- */
-
-/* A foreground built-in must run in the shell process itself (so `cd` really
-   changes the shell's directory).  If it has a redirection, redirect temporarily. */
+/* A built-in must run in the shell process itself (so `cd` really changes
+   the shell's directory).  If it has a redirection, redirect temporarily. */
 static int run_builtin_in_shell(command_t *cmd)
 {
     int redirected = (cmd->input[0] != '\0' || cmd->output[0] != '\0');
@@ -118,21 +78,15 @@ static int run_builtin_in_shell(command_t *cmd)
     return result;
 }
 
-/* ---------- child process ---------- */
-
 /* Code that runs in the child process. Never returns. */
-static void run_in_child(command_t *cmd, int null_stdin)
+static void run_in_child(command_t *cmd)
 {
-    if (null_stdin) {
-        redirect_stdin_from_null();      /* an explicit  < file  below overrides this */
-    }
-
     if (apply_redirections(cmd) < 0) {
         _exit(1);
     }
 
     if (is_builtin(cmd->argv[0])) {
-        execute_builtin(cmd);            /* runs in the child (e.g. `cd &` does not change the shell) */
+        execute_builtin(cmd);
         fflush(stdout);
         _exit(0);
     }
@@ -151,18 +105,18 @@ static void run_in_child(command_t *cmd, int null_stdin)
 static void wait_for(pid_t pid)
 {
     int status;
-    /* If the SIGCHLD handler already reaped this child, waitpid fails with
-       ECHILD and we simply move on. */
     while (waitpid(pid, &status, 0) < 0 && errno == EINTR) {
         /* interrupted by a signal: try again */
     }
 }
 
-/* ---------- pipeline / single command ---------- */
-
 int execute_pipeline(pipeline_t *pipeline)
 {
     int n = pipeline->command_count;
+
+    /* collect finished background jobs so they don't stay as zombies */
+    while (waitpid(-1, NULL, WNOHANG) > 0) {
+    }
 
     if (n < 1) {
         return 0;
@@ -177,11 +131,8 @@ int execute_pipeline(pipeline_t *pipeline)
         }
     }
 
-    /* the & belongs to the last command of the pipeline */
-    int background = pipeline->commands[n - 1].background;
-
-    /* Foreground single built-in: run inside the shell, no fork */
-    if (n == 1 && !background && is_builtin(pipeline->commands[0].argv[0])) {
+    /* Single built-in: run inside the shell, no fork */
+    if (n == 1 && is_builtin(pipeline->commands[0].argv[0])) {
         return run_builtin_in_shell(&pipeline->commands[0]);
     }
 
@@ -221,9 +172,7 @@ int execute_pipeline(pipeline_t *pipeline)
             if (fd[0] >= 0) {
                 close(fd[0]);
             }
-            /* only the first command of a background job reads /dev/null;
-               the others read from the previous pipe */
-            run_in_child(&pipeline->commands[i], background && i == 0);
+            run_in_child(&pipeline->commands[i]);
         }
 
         /* parent */
@@ -237,15 +186,9 @@ int execute_pipeline(pipeline_t *pipeline)
         close(prev_read);
     }
 
-    if (background) {
-        /* do NOT wait: print the PID (of the first process) and return to the prompt */
+    if (pipeline->commands[n - 1].background) {
         if (started > 0) {
-            if (n == 1) {
-                printf("[Background PID: %d]\n", (int)pids[0]);
-            } else {
-                printf("[Background Pipeline PID: %d]\n", (int)pids[0]);
-            }
-            fflush(stdout);
+            printf("[background] pid %d\n", (int)pids[started - 1]);
         }
     } else {
         for (int i = 0; i < started; i++) {
